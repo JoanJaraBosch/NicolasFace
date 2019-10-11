@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cat.urv.deim.joanjara.davidferrer.nicolasface" >
-
+    <!--Saying we will use the camera but is not requiered to work-->
+    <uses-feature android:name="android.hardware.camera"
+        android:required="false" />
     <!--Adding Read External Storage Permission-->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!--Adding Write External Storage Permission-->

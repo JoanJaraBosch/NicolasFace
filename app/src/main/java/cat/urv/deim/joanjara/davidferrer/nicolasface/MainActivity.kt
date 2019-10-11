@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Build.*
 import android.os.Bundle
 import android.widget.Toast
@@ -16,6 +17,7 @@ import android.provider.MediaStore
 
 
 class MainActivity : AppCompatActivity() {
+    private var REQUEST_IMAGE_CAPTURE = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +58,11 @@ class MainActivity : AppCompatActivity() {
                 //permission already granted
                 saveImageFromGallery();
             }
+        }
+        //BUTTON CLICK TAKE PHOTO
+        photo_take_btn.setOnClickListener {
+            REQUEST_IMAGE_CAPTURE = 1
+            dispatchTakePictureIntent()
         }
     }
 
@@ -113,6 +120,18 @@ class MainActivity : AppCompatActivity() {
             //This goes our code to make nicolas happens
 
         }
+        else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
+            val imageBitmap = data!!.extras!!.get("data") as Bitmap
+            image_view.setImageBitmap(imageBitmap)
+        }
 
+    }
+
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            }
+        }
     }
 }

@@ -9,12 +9,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.ColorMatrix
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.view.View
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
+import android.provider.MediaStore
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,7 +45,17 @@ class MainActivity : AppCompatActivity() {
         }
         //BUTTON CLICK SAVE
         img_save_btn.setOnClickListener {
-
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PackageManager.PERMISSION_DENIED){
+                //permission denied
+                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                //show popup to request runtime permission
+                requestPermissions(permissions, PERMISSION_CODE);
+            }
+            else{
+                //permission already granted
+                saveImageFromGallery();
+            }
         }
     }
 
@@ -56,6 +64,19 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         startActivityForResult(intent, IMAGE_PICK_CODE)
+    }
+
+    private fun saveImageFromGallery() {
+        val draw = image_view.drawable
+        val bitmap = (draw as BitmapDrawable).bitmap
+        // Save image to gallery
+        val message = MediaStore.Images.Media.insertImage(
+            contentResolver,
+            bitmap,
+            "",
+            "Nicolas Cage"
+        )
+        Toast.makeText(this, "Image saved: "+ Uri.parse(message), Toast.LENGTH_SHORT).show()
     }
 
     companion object {

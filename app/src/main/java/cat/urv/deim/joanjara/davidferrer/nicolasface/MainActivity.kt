@@ -4,20 +4,27 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Build.*
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.ColorMatrix
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.view.View
+
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        //BUTTON CLICK
+        img_save_btn.isClickable=false
+        img_save_btn.visibility= View.INVISIBLE
+        //BUTTON CLICK PICK
         img_pick_btn.setOnClickListener {
             //check runtime permission
             if (VERSION.SDK_INT >= VERSION_CODES.M){
@@ -37,6 +44,10 @@ class MainActivity : AppCompatActivity() {
                 //system OS is < Marshmallow
                 pickImageFromGallery();
             }
+        }
+        //BUTTON CLICK SAVE
+        img_save_btn.setOnClickListener {
+
         }
     }
 
@@ -73,9 +84,14 @@ class MainActivity : AppCompatActivity() {
 
     //handle result of picked image
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode,resultCode,data)
         if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE){
             image_view.setImageURI(data?.data)
+            img_save_btn.isClickable=true
+            img_save_btn.visibility= View.VISIBLE
+            //This goes our code to make nicolas happens
+
         }
-        super.onActivityResult(requestCode,resultCode,data)
+
     }
 }

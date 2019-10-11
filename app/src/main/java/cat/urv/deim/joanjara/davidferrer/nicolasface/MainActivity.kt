@@ -14,6 +14,11 @@ import android.view.View
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +27,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val pm = this.getPackageManager()
+        if(!pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)){
+            photo_take_btn.isClickable=false
+            photo_take_btn.visibility= View.INVISIBLE
+        }
         img_save_btn.isClickable=false
         img_save_btn.visibility= View.INVISIBLE
         //BUTTON CLICK PICK

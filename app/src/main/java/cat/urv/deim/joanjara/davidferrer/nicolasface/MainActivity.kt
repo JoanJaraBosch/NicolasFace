@@ -80,31 +80,11 @@ class MainActivity : AppCompatActivity() {
         }
         //BUTTON TO SAVE AN IMAGE
         img_save_btn.setOnClickListener {
-
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_DENIED){
-                //permission denied
-                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                //show popup to request runtime permission
-                requestPermissions(permissions, PERMISSION_CODE);
-            }
-            else{
-                try {
-                    val mess =MediaStore.Images.Media.insertImage(
-                        getContentResolver(),
-                        (image_view.drawable as BitmapDrawable).bitmap,
-                        "NicolasCage",
-                        "A nicolas cage modified image"
-                    );
-                    URI_NICOLAS = Uri.parse(mess)
-                }catch(e: ClassCastException){
-                    Toast.makeText(this, "Can't save the image", Toast.LENGTH_SHORT).show()
-
-                }
-            }
+            saveImage()
         }
         //BUTTON TO SHARE AN IMAGE
         img_share_btn.setOnClickListener {
+            saveImage()
             shareImage()
         }
         //BUTTON TRANSFORM INTO NICOLAS CAGE
@@ -118,6 +98,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun saveImage(){
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_DENIED){
+            //permission denied
+            val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            //show popup to request runtime permission
+            requestPermissions(permissions, PERMISSION_CODE);
+        }
+        else{
+            try {
+                val mess =MediaStore.Images.Media.insertImage(
+                    getContentResolver(),
+                    (image_view.drawable as BitmapDrawable).bitmap,
+                    "NicolasCage",
+                    "A nicolas cage modified image"
+                );
+                URI_NICOLAS = Uri.parse(mess)
+                Toast.makeText(this, "Image saved: "+URI_NICOLAS.toString(), Toast.LENGTH_SHORT).show()
+            }catch(e: ClassCastException){
+                Toast.makeText(this, "Can't save the image", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     private fun pickImageFromGallery() {
         //Intent to pick image
         val intent = Intent(Intent.ACTION_PICK)
@@ -144,7 +147,7 @@ class MainActivity : AppCompatActivity() {
                     PackageManager.PERMISSION_GRANTED
                 ) {
                     //permission from popup granted
-                    pickImageFromGallery()
+                    Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
                 } else {
                     //permission from popup denied
                     Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
@@ -163,7 +166,6 @@ class MainActivity : AppCompatActivity() {
             nicolas_btn.visibility= View.VISIBLE
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
-
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
         }

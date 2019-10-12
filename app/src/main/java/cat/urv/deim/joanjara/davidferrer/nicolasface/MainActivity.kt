@@ -110,6 +110,26 @@ class MainActivity : AppCompatActivity() {
             nicolas_btn.isClickable=false
             nicolas_btn.visibility= View.INVISIBLE
         }
+        //BUTTON TO ROTATE THE IMAGE -90 DEGREES
+        rotate_btn.setOnClickListener {
+            if(image_view != null){
+                val map = (image_view.drawable as BitmapDrawable).bitmap
+                val matrix = Matrix()
+                matrix.postRotate(-90F)
+
+                //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
+
+                val mutableBitmap = Bitmap.createBitmap(
+                    map, 0,
+                    0,
+                    map.width,
+                    map.height,
+                    matrix,
+                    true
+                )
+                image_view.setImageBitmap(mutableBitmap)
+            }
+        }
     }
 
     private fun saveImage(){

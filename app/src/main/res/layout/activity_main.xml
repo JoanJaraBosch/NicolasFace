@@ -30,6 +30,13 @@
         style="@style/Base.Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+    <!--Button to rotate-->
+    <Button
+        android:id="@+id/rotate_btn"
+        android:text="Rotate -90 degrees a photo"
+        style="@style/Base.Widget.AppCompat.Button.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
     <!--Button to transform into nicolas cage-->
     <Button
         android:id="@+id/nicolas_btn"

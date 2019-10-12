@@ -18,12 +18,9 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFace
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
-
-
-
-
-
-
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 
 
 
@@ -104,25 +101,25 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE) {
             image_view.setImageURI(data?.data)
-            detectFaces(data)
+            detectFaces()
 
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    fun detectFaces(data: Intent?) {
+    fun detectFaces() {
         val image: FirebaseVisionImage
 
         try {
-            if (data?.data != null) {
+
                 // Agafar el bitmap del storage, en principi no fa falta
                 /*val workingBitmap =
                     MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)*/
 
                 val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
 
-                image = FirebaseVisionImage.fromFilePath(this, data.data!!)
-
+                //image = FirebaseVisionImage.fromFilePath(this, data.data!!)
+                image = FirebaseVisionImage.fromBitmap(workingBitmap)
                 // Obtenemos una instancia de FirebaseVisionFaceDetector
                 val detector = FirebaseVision.getInstance()
                     .getVisionFaceDetector(highAccuracyOpts)
@@ -145,7 +142,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         })
 
-            }
+
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -158,7 +155,6 @@ class MainActivity : AppCompatActivity() {
 
 
         var nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
-
 
         // Rotacio de bitmap, en principi no fa falta
         /*if(bitmap.width>bitmap.height){
@@ -179,29 +175,41 @@ class MainActivity : AppCompatActivity() {
 
         val canvas = Canvas(mutableBitmap)
 
-        val color = -0xbdbdbe
+        //val color = -0xbdbdbe
         val paint = Paint()
         val rect = Rect(0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight())
-        paint.setAntiAlias(true);
-        canvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
+        //paint.setAntiAlias(true);
+        //canvas.drawARGB(0, 0, 0, 0);
+        //paint.setColor(color);
 
         for (face in list) {
             var bounds = face.boundingBox
+            var matrix = Matrix()
 
+            if(face.headEulerAngleY>0){
+                matrix.postScale(-1f,1f)
+            }
 
-            /*canvas.drawCircle(
-                bounds.exactCenterX(),
-                bounds.exactCenterY(),
-                bounds.height().toFloat() / 2,
-                paint
-            )*/
+            // Codi per rotar les cares
+            matrix.postRotate(-1*(face.headEulerAngleZ));
+
             var scaledNicolas = Bitmap.createScaledBitmap(
                 nicolas, bounds.width(),
                 bounds.height()+bounds.height()/2, false
             )
-            canvas.drawBitmap(scaledNicolas, bounds.exactCenterX()-bounds.width()/2,
-                bounds.exactCenterY()-(bounds.height()), paint)
+            var rotatedNicolas = Bitmap.createBitmap(
+                scaledNicolas, 0,
+                0,
+                scaledNicolas.width,
+                scaledNicolas.height,
+                matrix,
+                true
+            )
+            var width = bounds.centerX()-(rotatedNicolas.width/2).toFloat()
+            var height = bounds.centerY()-(rotatedNicolas.height/1.7).toFloat()
+
+            canvas.drawBitmap(rotatedNicolas, width,
+                height, paint)
         }
         canvas.drawBitmap(mutableBitmap, rect, rect, paint);
         image_view.setImageBitmap(mutableBitmap)

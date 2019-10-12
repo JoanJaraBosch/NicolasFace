@@ -34,7 +34,8 @@ class MainActivity : AppCompatActivity() {
     private var REQUEST_IMAGE_CAPTURE = 0
     private var URI_NICOLAS = Uri.EMPTY
     private var dataFace : Intent? = null
-
+    private var permisRead =false
+    private var permisWrite =false
     // High-accuracy landmark detection and face classification
     val highAccuracyOpts = FirebaseVisionFaceDetectorOptions.Builder()
         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
@@ -45,6 +46,27 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_DENIED){
+            //permission denied
+            val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            //show popup to request runtime permission
+            requestPermissions(permissions, PERMISSION_CODE);
+        }else{
+            permisWrite=true
+        }
+
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_DENIED
+        ) {
+            //permission denied
+            val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE);
+            //show popup to request runtime permission
+            requestPermissions(permissions, PERMISSION_CODE);
+        } else {
+            permisRead=true
+        }
+
         val pm = this.getPackageManager()
         if(!pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)){
             photo_take_btn.isClickable=false
@@ -62,25 +84,7 @@ class MainActivity : AppCompatActivity() {
 
         //BUTTON CLICK PICK
         img_pick_btn.setOnClickListener {
-            //check runtime permission
-            if (VERSION.SDK_INT >= VERSION_CODES.M) {
-                if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
-                    PackageManager.PERMISSION_DENIED
-                ) {
-                    //permission denied
-                    val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE);
-                    //show popup to request runtime permission
-                    requestPermissions(permissions, PERMISSION_CODE);
-                } else {
-                    //permission already granted
-                    pickImageFromGallery();
-                }
-            } else {
-                //system OS is < Marshmallow
-                img_share_btn.isClickable=false
-                img_share_btn.visibility= View.INVISIBLE
-                pickImageFromGallery();
-            }
+            pickImageFromGallery();
         }
 
         //BUTTON CLICK TAKE PHOTO
@@ -94,17 +98,8 @@ class MainActivity : AppCompatActivity() {
         }
         //BUTTON TO SHARE AN IMAGE
         img_share_btn.setOnClickListener {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_DENIED){
-                //permission denied
-                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                //show popup to request runtime permission
-                requestPermissions(permissions, PERMISSION_CODE);
-            }
-            else {
-                saveImage()
-                shareImage()
-            }
+            saveImage()
+            shareImage()
         }
         //BUTTON TRANSFORM INTO NICOLAS CAGE
         nicolas_btn.setOnClickListener {
@@ -190,8 +185,20 @@ class MainActivity : AppCompatActivity() {
             nicolas_btn.visibility= View.VISIBLE
             val file =  File(mCurrentPhotoPath);
             val bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.fromFile(file));
+            val matrix = Matrix()
+            matrix.postRotate(-90F)
 
-            image_view.setImageBitmap(bitmap)
+            //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
+
+            val mutableBitmap = Bitmap.createBitmap(
+                bitmap, 0,
+                0,
+                bitmap.width,
+                bitmap.height,
+                matrix,
+                true
+            )
+            image_view.setImageBitmap(mutableBitmap)
         }
     }
 

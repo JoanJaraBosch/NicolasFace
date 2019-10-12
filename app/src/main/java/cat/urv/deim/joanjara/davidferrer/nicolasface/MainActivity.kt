@@ -1,6 +1,7 @@
 package cat.urv.deim.joanjara.davidferrer.nicolasface
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -17,28 +18,30 @@ import kotlinx.android.synthetic.main.activity_main.*
 import android.view.View
 import android.net.Uri
 import android.provider.MediaStore
-import android.os.StrictMode
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 import android.graphics.*
 import com.google.firebase.ml.vision.face.FirebaseVisionFace
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
+import android.os.Environment
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
     private var REQUEST_IMAGE_CAPTURE = 0
     private var URI_NICOLAS = Uri.EMPTY
-    private var image : Uri? = null
-    private var mCameraFileName : String? = null
     private var dataFace : Intent? = null
+
     // High-accuracy landmark detection and face classification
     val highAccuracyOpts = FirebaseVisionFaceDetectorOptions.Builder()
         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
         .setLandmarkMode(FirebaseVisionFaceDetectorOptions.ALL_LANDMARKS)
         .setClassificationMode(FirebaseVisionFaceDetectorOptions.ALL_CLASSIFICATIONS)
         .build()
+    @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -47,8 +50,9 @@ class MainActivity : AppCompatActivity() {
             photo_take_btn.isClickable=false
             photo_take_btn.visibility= View.INVISIBLE
         }
-        img_save_btn.isClickable=false
-        img_save_btn.visibility= View.INVISIBLE
+
+        nicolas_btn.isClickable=false
+        nicolas_btn.visibility= View.INVISIBLE
 
         nicolas_btn.isClickable=false
         nicolas_btn.visibility= View.INVISIBLE
@@ -73,11 +77,23 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 //system OS is < Marshmallow
+                img_share_btn.isClickable=false
+                img_share_btn.visibility= View.INVISIBLE
                 pickImageFromGallery();
             }
         }
-        //BUTTON CLICK SAVE
+
+        //BUTTON CLICK TAKE PHOTO
+        photo_take_btn.setOnClickListener {
+            REQUEST_IMAGE_CAPTURE = 1
+            dispatchTakePictureIntent()
+        }
+        //BUTTON TO SAVE AN IMAGE
         img_save_btn.setOnClickListener {
+            saveImage()
+        }
+        //BUTTON TO SHARE AN IMAGE
+        img_share_btn.setOnClickListener {
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
                 PackageManager.PERMISSION_DENIED){
                 //permission denied
@@ -85,47 +101,54 @@ class MainActivity : AppCompatActivity() {
                 //show popup to request runtime permission
                 requestPermissions(permissions, PERMISSION_CODE);
             }
-            else{
-                //permission already granted
-                saveImageFromGallery();
-                img_share_btn.isClickable=true
-                img_share_btn.visibility= View.VISIBLE
+            else {
+                saveImage()
+                shareImage()
             }
-        }
-        //BUTTON CLICK TAKE PHOTO
-        photo_take_btn.setOnClickListener {
-            REQUEST_IMAGE_CAPTURE = 1
-            dispatchTakePictureIntent()
-        }
-        //BUTTON TO SHARE AN IMAGE
-        img_share_btn.setOnClickListener {
-            shareImage()
         }
         //BUTTON TRANSFORM INTO NICOLAS CAGE
         nicolas_btn.setOnClickListener {
-            detectFaces(dataFace)
+            Toast.makeText(this, "Transforming image to Nicolas Cage Image", Toast.LENGTH_SHORT).show()
+            detectFaces()
+            img_share_btn.isClickable=true
+            img_share_btn.visibility= View.VISIBLE
+            nicolas_btn.isClickable=false
+            nicolas_btn.visibility= View.INVISIBLE
+        }
+        //BUTTON TRANSFORM INTO NICOLAS CAGE
+        nicolas_btn.setOnClickListener {
+            detectFaces()
         }
     }
 
+    private fun saveImage(){
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_DENIED){
+            //permission denied
+            val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            //show popup to request runtime permission
+            requestPermissions(permissions, PERMISSION_CODE);
+        }
+        else{
+            try {
+                val mess =MediaStore.Images.Media.insertImage(
+                    getContentResolver(),
+                    (image_view.drawable as BitmapDrawable).bitmap,
+                    "NicolasCage",
+                    "A nicolas cage modified image"
+                );
+                URI_NICOLAS = Uri.parse(mess)
+                Toast.makeText(this, "Image saved: "+URI_NICOLAS.toString(), Toast.LENGTH_SHORT).show()
+            }catch(e: ClassCastException){
+                Toast.makeText(this, "Can't save the image", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     private fun pickImageFromGallery() {
         //Intent to pick image
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         startActivityForResult(intent, IMAGE_PICK_CODE)
-    }
-
-    private fun saveImageFromGallery() {
-        // Save image to gallery
-        val draw = image_view.drawable
-        val bitmap = (draw as BitmapDrawable).bitmap
-        val message = MediaStore.Images.Media.insertImage(
-            contentResolver,
-            bitmap,
-            "",
-            "Nicolas Cage"
-        )
-        URI_NICOLAS = Uri.parse(message)
-        Toast.makeText(this, "Image saved: "+URI_NICOLAS , Toast.LENGTH_SHORT).show()
     }
 
     companion object {
@@ -146,8 +169,8 @@ class MainActivity : AppCompatActivity() {
                 if (grantResults.size > 0 && grantResults[0] ==
                     PackageManager.PERMISSION_GRANTED
                 ) {
-                    //permission from popup granted
-                    pickImageFromGallery()
+                    Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
+
                 } else {
                     //permission from popup denied
                     Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
@@ -161,46 +184,48 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode,resultCode,data)
         if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE){
             image_view.setImageURI(data?.data)
-            img_save_btn.isClickable=true
-            img_save_btn.visibility= View.VISIBLE
             //This goes our code to make nicolas happens
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
             dataFace = data
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
-            img_save_btn.isClickable=true
-            img_save_btn.visibility= View.VISIBLE
-            image = Uri.fromFile(File(mCameraFileName))
-            image_view.setImageURI(image)
-            image_view.setVisibility(View.VISIBLE)
-            val file = File(mCameraFileName)
-            if (!file.exists()) {
-                file.mkdir()
-            }
-            saveImageFromGallery()
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
+            val file =  File(mCurrentPhotoPath);
+            val bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.fromFile(file));
+
+            image_view.setImageBitmap(bitmap)
         }
     }
 
     private fun dispatchTakePictureIntent() {
-        val builder = StrictMode.VmPolicy.Builder()
-        StrictMode.setVmPolicy(builder.build())
-        val intent = Intent()
-        intent.action = MediaStore.ACTION_IMAGE_CAPTURE
+        /*Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            }
+        }*(
+         */
+        val takePictureIntent =  Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            var photoFile: File? = null;
+            try {
+                photoFile = createImageFile();
+            } catch ( ex: IOException) {
+                // Error occurred while creating the File
 
-        val date = Date()
-        val df = SimpleDateFormat("-mm-ss")
-
-        val newPicFile = df.format(date) + ".jpg"
-        val outPath = "/sdcard/$newPicFile"
-        val outFile = File(outPath)
-
-        mCameraFileName = outFile.toString()
-        val outuri = Uri.fromFile(outFile)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, outuri)
-        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                val photoURI = FileProvider.getUriForFile(this,
+                "cat.urv.deim.joanjara.davidferrer.nicolasface.fileprovider",
+                photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
+        }
     }
 
     fun shareImage(){
@@ -211,43 +236,36 @@ class MainActivity : AppCompatActivity() {
         startActivity(sendIntent)
     }
 
-    fun detectFaces(data: Intent?) {
+    fun detectFaces() {
         val image: FirebaseVisionImage
 
         try {
-            if (data?.data != null) {
                 // Agafar el bitmap del storage, en principi no fa falta
                 /*val workingBitmap =
                     MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)*/
+            val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
+            image = FirebaseVisionImage.fromBitmap(workingBitmap)
+            // Obtenemos una instancia de FirebaseVisionFaceDetector
+            val detector = FirebaseVision.getInstance()
+                .getVisionFaceDetector(highAccuracyOpts)
 
-                val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
-
-                image = FirebaseVisionImage.fromFilePath(this, data.data!!)
-
-                // Obtenemos una instancia de FirebaseVisionFaceDetector
-                val detector = FirebaseVision.getInstance()
-                    .getVisionFaceDetector(highAccuracyOpts)
-
-                // Pasamos la imagen al metodo detectInImage
-                val result = detector.detectInImage(image)
-                    .addOnSuccessListener { faces ->
-                        // Task completed successfully
-                        //canvas.rotate((-Math.PI / 2).toFloat());
-                        modifyFaces(faces,workingBitmap)
+            // Pasamos la imagen al metodo detectInImage
+            val result = detector.detectInImage(image)
+                .addOnSuccessListener { faces ->
+                    // Task completed successfully
+                    //canvas.rotate((-Math.PI / 2).toFloat());
+                    modifyFaces(faces,workingBitmap)
 
 
-                        //Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener(
-                        object : OnFailureListener {
-                            override fun onFailure(e: Exception) {
-                                // Task failed with an exception
-                                // ...
-                            }
-                        })
-
-            }
-
+                    //Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener(
+                    object : OnFailureListener {
+                        override fun onFailure(e: Exception) {
+                            // Task failed with an exception
+                            // ...
+                        }
+                    })
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()
@@ -308,4 +326,22 @@ class MainActivity : AppCompatActivity() {
         image_view.setImageBitmap(mutableBitmap)
     }
 
+    var mCurrentPhotoPath: String? =null
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val imageFileName = "JPEG_" + timeStamp + "_"
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val image = File.createTempFile(
+            imageFileName, /* prefix */
+            ".jpg", /* suffix */
+            storageDir      /* directory */
+        )
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath()
+        return image
+    }
 }

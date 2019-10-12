@@ -317,7 +317,6 @@ class MainActivity : AppCompatActivity() {
         for (face in list) {
             var bounds = face.boundingBox
             var matrix = Matrix()
-
             if(face.headEulerAngleY>0){
                 matrix.postScale(-1f,1f)
             }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "635916733598",
+    "firebase_url": "https://nicolasface-73e22.firebaseio.com",
+    "project_id": "nicolasface-73e22",
+    "storage_bucket": "nicolasface-73e22.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635916733598:android:fba9dbd1a619c24cdb7f8f",
+        "android_client_info": {
+          "package_name": "cat.urv.deim.joanjara.davidferrer.nicolasface"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "635916733598-l26ihjsi7o070dkh19etjacn6scvcj1j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "cat.urv.deim.joanjara.davidferrer.nicolasface",
+            "certificate_hash": "ff072395c5a3d3bd71f9c97d60fcfa060a90227b"
+          }
+        },
+        {
+          "client_id": "635916733598-7lltuom136aktgmhaim0n2qtfhchhedg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtGDdZvf_xImOylvfGERXulTzFeFHxXuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "635916733598-7lltuom136aktgmhaim0n2qtfhchhedg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

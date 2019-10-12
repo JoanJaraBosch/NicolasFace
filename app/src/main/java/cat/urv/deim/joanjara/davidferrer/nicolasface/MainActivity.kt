@@ -115,10 +115,6 @@ class MainActivity : AppCompatActivity() {
             nicolas_btn.isClickable=false
             nicolas_btn.visibility= View.INVISIBLE
         }
-        //BUTTON TRANSFORM INTO NICOLAS CAGE
-        nicolas_btn.setOnClickListener {
-            detectFaces()
-        }
     }
 
     private fun saveImage(){

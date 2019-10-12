@@ -47,8 +47,6 @@ class MainActivity : AppCompatActivity() {
             photo_take_btn.isClickable=false
             photo_take_btn.visibility= View.INVISIBLE
         }
-        img_save_btn.isClickable=false
-        img_save_btn.visibility= View.INVISIBLE
 
         nicolas_btn.isClickable=false
         nicolas_btn.visibility= View.INVISIBLE
@@ -73,25 +71,12 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 //system OS is < Marshmallow
+                img_share_btn.isClickable=false
+                img_share_btn.visibility= View.INVISIBLE
                 pickImageFromGallery();
             }
         }
-        //BUTTON CLICK SAVE
-        img_save_btn.setOnClickListener {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_DENIED){
-                //permission denied
-                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                //show popup to request runtime permission
-                requestPermissions(permissions, PERMISSION_CODE);
-            }
-            else{
-                //permission already granted
-                saveImageFromGallery();
-                img_share_btn.isClickable=true
-                img_share_btn.visibility= View.VISIBLE
-            }
-        }
+
         //BUTTON CLICK TAKE PHOTO
         photo_take_btn.setOnClickListener {
             REQUEST_IMAGE_CAPTURE = 1
@@ -103,7 +88,13 @@ class MainActivity : AppCompatActivity() {
         }
         //BUTTON TRANSFORM INTO NICOLAS CAGE
         nicolas_btn.setOnClickListener {
+            Toast.makeText(this, "Transforming image to Nicolas Cage Image", Toast.LENGTH_SHORT).show()
             detectFaces(dataFace)
+            saveImageFromGallery();
+            img_share_btn.isClickable=true
+            img_share_btn.visibility= View.VISIBLE
+            nicolas_btn.isClickable=false
+            nicolas_btn.visibility= View.INVISIBLE
         }
     }
 
@@ -161,16 +152,12 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode,resultCode,data)
         if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE){
             image_view.setImageURI(data?.data)
-            img_save_btn.isClickable=true
-            img_save_btn.visibility= View.VISIBLE
             //This goes our code to make nicolas happens
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
             dataFace = data
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
-            img_save_btn.isClickable=true
-            img_save_btn.visibility= View.VISIBLE
             image = Uri.fromFile(File(mCameraFileName))
             image_view.setImageURI(image)
             image_view.setVisibility(View.VISIBLE)

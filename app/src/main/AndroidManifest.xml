@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cat.urv.deim.joanjara.davidferrer.nicolasface" >
+    <!-- To use firebase from google -->
+    <meta-data
+        android:name="com.google.firebase.ml.vision.DEPENDENCIES"
+        android:value="face" />
+    <!-- To use multiple models: android:value="face,model2,model3" -->
     <!--Saying we will use the camera but is not requiered to work-->
     <uses-feature android:name="android.hardware.camera"
         android:required="false" />
@@ -9,7 +14,8 @@
     <!--Adding Write External Storage Permission-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application
-        android:allowBackup="true"
+
+    android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

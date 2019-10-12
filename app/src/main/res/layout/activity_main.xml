@@ -8,6 +8,7 @@
     android:gravity="center_horizontal"
     tools:context=".MainActivity">
 
+
     <!--ImageView where image will be set-->
     <ImageView
         android:id="@+id/image_view"
@@ -29,13 +30,6 @@
         style="@style/Base.Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-    <!--Button to share image-->
-    <Button
-        android:id="@+id/img_share_btn"
-        android:text="Share"
-        style="@style/Base.Widget.AppCompat.Button.Colored"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
     <!--Button to download image-->
     <Button
         android:id="@+id/img_save_btn"
@@ -43,4 +37,11 @@
         style="@style/Base.Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/img_share_btn"
+        android:layout_width="44dp"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        app:srcCompat="?attr/actionModeShareDrawable" />
 </LinearLayout>

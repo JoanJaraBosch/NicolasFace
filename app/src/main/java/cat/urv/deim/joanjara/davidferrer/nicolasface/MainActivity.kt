@@ -136,6 +136,8 @@ class MainActivity : AppCompatActivity() {
 
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
+            img_save_btn.isClickable=true
+            img_save_btn.visibility= View.VISIBLE
             val imageBitmap = data!!.extras!!.get("data") as Bitmap
             image_view.setImageBitmap(imageBitmap)
         }

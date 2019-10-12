@@ -18,10 +18,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import android.view.View
 import android.net.Uri
 import android.provider.MediaStore
-import android.os.StrictMode
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 import android.graphics.*
 import com.google.firebase.ml.vision.face.FirebaseVisionFace
 import android.graphics.BitmapFactory
@@ -31,10 +27,6 @@ import android.graphics.Bitmap
 class MainActivity : AppCompatActivity() {
     private var REQUEST_IMAGE_CAPTURE = 0
     private var URI_NICOLAS = Uri.EMPTY
-    private var image : Uri? = null
-    private var mCameraFileName : String? = null
-    private var dataFace : Intent? = null
-    private var auxBitMap : Bitmap? = null
     // High-accuracy landmark detection and face classification
     val highAccuracyOpts = FirebaseVisionFaceDetectorOptions.Builder()
         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
@@ -60,7 +52,6 @@ class MainActivity : AppCompatActivity() {
         //BUTTON CLICK PICK
         img_pick_btn.setOnClickListener {
             //check runtime permission
-            auxBitMap=null
             if (VERSION.SDK_INT >= VERSION_CODES.M) {
                 if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
                     PackageManager.PERMISSION_DENIED
@@ -83,9 +74,34 @@ class MainActivity : AppCompatActivity() {
 
         //BUTTON CLICK TAKE PHOTO
         photo_take_btn.setOnClickListener {
-            dataFace=null
+            /*dataFace=null
             REQUEST_IMAGE_CAPTURE = 1
-            dispatchTakePictureIntent()
+            dispatchTakePictureIntent()*/
+        }
+        //BUTTON TO SAVE AN IMAGE
+        img_save_btn.setOnClickListener {
+
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PackageManager.PERMISSION_DENIED){
+                //permission denied
+                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                //show popup to request runtime permission
+                requestPermissions(permissions, PERMISSION_CODE);
+            }
+            else{
+                try {
+                    val mess =MediaStore.Images.Media.insertImage(
+                        getContentResolver(),
+                        (image_view.drawable as BitmapDrawable).bitmap,
+                        "NicolasCage",
+                        "A nicolas cage modified image"
+                    );
+                    URI_NICOLAS = Uri.parse(mess)
+                }catch(e: ClassCastException){
+                    Toast.makeText(this, "Can't save the image", Toast.LENGTH_SHORT).show()
+
+                }
+            }
         }
         //BUTTON TO SHARE AN IMAGE
         img_share_btn.setOnClickListener {
@@ -94,8 +110,7 @@ class MainActivity : AppCompatActivity() {
         //BUTTON TRANSFORM INTO NICOLAS CAGE
         nicolas_btn.setOnClickListener {
             Toast.makeText(this, "Transforming image to Nicolas Cage Image", Toast.LENGTH_SHORT).show()
-            detectFaces(dataFace, auxBitMap)
-            saveImageFromGallery();
+            detectFaces()
             img_share_btn.isClickable=true
             img_share_btn.visibility= View.VISIBLE
             nicolas_btn.isClickable=false
@@ -108,21 +123,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         startActivityForResult(intent, IMAGE_PICK_CODE)
-    }
-
-    private fun saveImageFromGallery() {
-        // Save image to gallery
-        val draw = image_view.drawable
-        val bitmap = (draw as BitmapDrawable).bitmap
-        val message = MediaStore.Images.Media.insertImage(
-            contentResolver,
-            bitmap,
-            "",
-            "Nicolas Cage"
-        )
-        URI_NICOLAS = Uri.parse(message)
-        auxBitMap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), URI_NICOLAS);
-        Toast.makeText(this, "Image saved: "+URI_NICOLAS , Toast.LENGTH_SHORT).show()
     }
 
     companion object {
@@ -161,39 +161,16 @@ class MainActivity : AppCompatActivity() {
             //This goes our code to make nicolas happens
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
-            dataFace = data
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
-            image = Uri.fromFile(File(mCameraFileName))
-            image_view.setImageURI(image)
-            image_view.setVisibility(View.VISIBLE)
-            val file = File(mCameraFileName)
-            if (!file.exists()) {
-                file.mkdir()
-            }
-            saveImageFromGallery()
+
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
         }
     }
 
     private fun dispatchTakePictureIntent() {
-        val builder = StrictMode.VmPolicy.Builder()
-        StrictMode.setVmPolicy(builder.build())
-        val intent = Intent()
-        intent.action = MediaStore.ACTION_IMAGE_CAPTURE
 
-        val date = Date()
-        val df = SimpleDateFormat("-mm-ss")
-
-        val newPicFile = df.format(date) + ".jpg"
-        val outPath = "/sdcard/$newPicFile"
-        val outFile = File(outPath)
-
-        mCameraFileName = outFile.toString()
-        val outuri = Uri.fromFile(outFile)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, outuri)
-        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
     }
 
     fun shareImage(){
@@ -204,42 +181,36 @@ class MainActivity : AppCompatActivity() {
         startActivity(sendIntent)
     }
 
-    fun detectFaces(data: Intent?, map: Bitmap?) {
+    fun detectFaces() {
         val image: FirebaseVisionImage
 
         try {
-            if (data?.data != null || map!=null) {
                 // Agafar el bitmap del storage, en principi no fa falta
                 /*val workingBitmap =
                     MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)*/
+            val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
+            image = FirebaseVisionImage.fromBitmap(workingBitmap)
+            // Obtenemos una instancia de FirebaseVisionFaceDetector
+            val detector = FirebaseVision.getInstance()
+                .getVisionFaceDetector(highAccuracyOpts)
 
-                val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
-                if(data!=null) image = FirebaseVisionImage.fromFilePath(this, data!!.data!!)
-                else image = FirebaseVisionImage.fromBitmap(map!!)
-                // Obtenemos una instancia de FirebaseVisionFaceDetector
-                val detector = FirebaseVision.getInstance()
-                    .getVisionFaceDetector(highAccuracyOpts)
-
-                // Pasamos la imagen al metodo detectInImage
-                val result = detector.detectInImage(image)
-                    .addOnSuccessListener { faces ->
-                        // Task completed successfully
-                        //canvas.rotate((-Math.PI / 2).toFloat());
-                        modifyFaces(faces,workingBitmap)
+            // Pasamos la imagen al metodo detectInImage
+            val result = detector.detectInImage(image)
+                .addOnSuccessListener { faces ->
+                    // Task completed successfully
+                    //canvas.rotate((-Math.PI / 2).toFloat());
+                    modifyFaces(faces,workingBitmap)
 
 
-                        //Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener(
-                        object : OnFailureListener {
-                            override fun onFailure(e: Exception) {
-                                // Task failed with an exception
-                                // ...
-                            }
-                        })
-
-            }
-
+                    //Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener(
+                    object : OnFailureListener {
+                        override fun onFailure(e: Exception) {
+                            // Task failed with an exception
+                            // ...
+                        }
+                    })
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()

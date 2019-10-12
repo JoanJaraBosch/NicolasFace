@@ -285,44 +285,45 @@ class MainActivity : AppCompatActivity() {
     fun modifyFaces(list : List<FirebaseVisionFace>, bitmap: Bitmap){
         var mutableBitmap = bitmap.copy(bitmap.config, true)
 
-
-        var nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
-
-        // Rotacio de bitmap, en principi no fa falta
-        /*if(bitmap.width>bitmap.height){
-            val matrix = Matrix()
-            matrix.postRotate(-90F)
-
-            //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
-
-            mutableBitmap = Bitmap.createBitmap(
-                mutableBitmap, 0,
-                0,
-                mutableBitmap.width,
-                mutableBitmap.height,
-                matrix,
-                true
-            )
-        }*/
-
         val canvas = Canvas(mutableBitmap)
-
-        //val color = -0xbdbdbe
         val paint = Paint()
         val rect = Rect(0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight())
-        //paint.setAntiAlias(true);
-        //canvas.drawARGB(0, 0, 0, 0);
-        //paint.setColor(color);
+
+        var nicolas :Bitmap
 
         for (face in list) {
             var bounds = face.boundingBox
             var matrix = Matrix()
+
+            if(face.smilingProbability>0.5f && face.leftEyeOpenProbability<0.3f && face.rightEyeOpenProbability<0.3f){
+                nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage3)
+            }
+            else if(face.headEulerAngleY.toInt()==0){
+                nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage2)
+            }
+            else if(face.smilingProbability<=0.13f){
+                nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage4)
+            }
+            else if(face.smilingProbability>0.13f && face.smilingProbability<=0.5f) {
+                nicolas = BitmapFactory.decodeResource(this.getResources(), R.drawable.nicolas_cage6)
+            }
+            else if(face.smilingProbability>0.5f && face.smilingProbability<0.95f){
+                nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
+            }
+            else if(face.smilingProbability>=0.99f){
+                nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage5)
+            }
+            else{
+                nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
+            }
+
+            //Tractament de les cares
             if(face.headEulerAngleY>0){
                 matrix.postScale(-1f,1f)
             }
 
             // Codi per rotar les cares
-            matrix.postRotate(-1*(face.headEulerAngleZ));
+            matrix.postRotate(-1*(face.headEulerAngleZ))
 
             var scaledNicolas = Bitmap.createScaledBitmap(
                 nicolas, bounds.width(),
@@ -342,11 +343,12 @@ class MainActivity : AppCompatActivity() {
             canvas.drawBitmap(rotatedNicolas, width,
                 height, paint)
         }
-        canvas.drawBitmap(mutableBitmap, rect, rect, paint);
+        canvas.drawBitmap(mutableBitmap, rect, rect, paint)
         image_view.setImageBitmap(mutableBitmap)
     }
 
     var mCurrentPhotoPath: String? =null
+
 
     @Throws(IOException::class)
     private fun createImageFile(): File {

@@ -9,6 +9,10 @@ import android.os.Build.*
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.firebase.ml.vision.FirebaseVision
+import com.google.firebase.ml.vision.common.FirebaseVisionImage
+import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 import kotlinx.android.synthetic.main.activity_main.*
 import android.view.View
 import android.net.Uri
@@ -17,15 +21,23 @@ import android.os.StrictMode
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import android.graphics.*
+import com.google.firebase.ml.vision.face.FirebaseVisionFace
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 
-
-
-
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
     private var REQUEST_IMAGE_CAPTURE = 0
     private var URI_NICOLAS = Uri.EMPTY
     private var image : Uri? = null
     private var mCameraFileName : String? = null
+    // High-accuracy landmark detection and face classification
+    val highAccuracyOpts = FirebaseVisionFaceDetectorOptions.Builder()
+        .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
+        .setLandmarkMode(FirebaseVisionFaceDetectorOptions.ALL_LANDMARKS)
+        .setClassificationMode(FirebaseVisionFaceDetectorOptions.ALL_CLASSIFICATIONS)
+        .build()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -43,20 +55,19 @@ class MainActivity : AppCompatActivity() {
         //BUTTON CLICK PICK
         img_pick_btn.setOnClickListener {
             //check runtime permission
-            if (VERSION.SDK_INT >= VERSION_CODES.M){
+            if (VERSION.SDK_INT >= VERSION_CODES.M) {
                 if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
-                    PackageManager.PERMISSION_DENIED){
+                    PackageManager.PERMISSION_DENIED
+                ) {
                     //permission denied
                     val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE);
                     //show popup to request runtime permission
                     requestPermissions(permissions, PERMISSION_CODE);
-                }
-                else{
+                } else {
                     //permission already granted
                     pickImageFromGallery();
                 }
-            }
-            else{
+            } else {
                 //system OS is < Marshmallow
                 pickImageFromGallery();
             }
@@ -117,15 +128,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     //handle requested permission result
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when(requestCode){
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
             PERMISSION_CODE -> {
-                if (grantResults.size >0 && grantResults[0] ==
-                    PackageManager.PERMISSION_GRANTED){
+                if (grantResults.size > 0 && grantResults[0] ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
                     //permission from popup granted
                     pickImageFromGallery()
-                }
-                else{
+                } else {
                     //permission from popup denied
                     Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
                 }
@@ -141,7 +156,7 @@ class MainActivity : AppCompatActivity() {
             img_save_btn.isClickable=true
             img_save_btn.visibility= View.VISIBLE
             //This goes our code to make nicolas happens
-
+            detectFaces(data)
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
             img_save_btn.isClickable=true
@@ -160,6 +175,7 @@ class MainActivity : AppCompatActivity() {
             if (!file.exists()) {
                 file.mkdir()
             }
+            detectFaces(data)
         }
     }
 
@@ -189,4 +205,102 @@ class MainActivity : AppCompatActivity() {
         sendIntent.putExtra(Intent.EXTRA_STREAM, URI_NICOLAS)
         startActivity(sendIntent)
     }
+
+    fun detectFaces(data: Intent?) {
+        val image: FirebaseVisionImage
+
+        try {
+            if (data?.data != null) {
+                // Agafar el bitmap del storage, en principi no fa falta
+                /*val workingBitmap =
+                    MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)*/
+
+                val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
+
+                image = FirebaseVisionImage.fromFilePath(this, data.data!!)
+
+                // Obtenemos una instancia de FirebaseVisionFaceDetector
+                val detector = FirebaseVision.getInstance()
+                    .getVisionFaceDetector(highAccuracyOpts)
+
+                // Pasamos la imagen al metodo detectInImage
+                val result = detector.detectInImage(image)
+                    .addOnSuccessListener { faces ->
+                        // Task completed successfully
+                        //canvas.rotate((-Math.PI / 2).toFloat());
+                        modifyFaces(faces,workingBitmap)
+
+
+                        //Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener(
+                        object : OnFailureListener {
+                            override fun onFailure(e: Exception) {
+                                // Task failed with an exception
+                                // ...
+                            }
+                        })
+
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun modifyFaces(list : List<FirebaseVisionFace>, bitmap: Bitmap){
+        var mutableBitmap = bitmap.copy(bitmap.config, true)
+
+
+        var nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
+
+
+        // Rotacio de bitmap, en principi no fa falta
+        /*if(bitmap.width>bitmap.height){
+            val matrix = Matrix()
+            matrix.postRotate(-90F)
+
+            //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
+
+            mutableBitmap = Bitmap.createBitmap(
+                mutableBitmap, 0,
+                0,
+                mutableBitmap.width,
+                mutableBitmap.height,
+                matrix,
+                true
+            )
+        }*/
+
+        val canvas = Canvas(mutableBitmap)
+
+        val color = -0xbdbdbe
+        val paint = Paint()
+        val rect = Rect(0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight())
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+
+        for (face in list) {
+            var bounds = face.boundingBox
+
+
+            /*canvas.drawCircle(
+                bounds.exactCenterX(),
+                bounds.exactCenterY(),
+                bounds.height().toFloat() / 2,
+                paint
+            )*/
+            var scaledNicolas = Bitmap.createScaledBitmap(
+                nicolas, bounds.width(),
+                bounds.height()+bounds.height()/2, false
+            )
+            canvas.drawBitmap(scaledNicolas, bounds.exactCenterX()-bounds.width()/2,
+                bounds.exactCenterY()-(bounds.height()), paint)
+        }
+        canvas.drawBitmap(mutableBitmap, rect, rect, paint);
+        image_view.setImageBitmap(mutableBitmap)
+    }
+
 }

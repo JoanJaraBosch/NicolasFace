@@ -16,6 +16,17 @@ import kotlinx.android.synthetic.main.activity_main.*
 import android.provider.MediaStore
 import android.graphics.*
 import com.google.firebase.ml.vision.face.FirebaseVisionFace
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+
+
+
+
+
+
 
 
 @Suppress("DEPRECATION")
@@ -108,7 +119,6 @@ class MainActivity : AppCompatActivity() {
                 val workingBitmap =
                     MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)
 
-
                 image = FirebaseVisionImage.fromFilePath(this, data.data!!)
 
                 // Obtenemos una instancia de FirebaseVisionFaceDetector
@@ -123,7 +133,7 @@ class MainActivity : AppCompatActivity() {
                         modifyFaces(faces,workingBitmap)
 
 
-                        Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(this, faces.size.toString(), Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener(
                         object : OnFailureListener {
@@ -143,20 +153,28 @@ class MainActivity : AppCompatActivity() {
 
     fun modifyFaces(list : List<FirebaseVisionFace>, bitmap: Bitmap){
         var mutableBitmap = bitmap.copy(bitmap.config, true)
-        val matrix = Matrix()
 
-        matrix.postRotate(-90F)
 
-        //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
+        var nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
 
-        mutableBitmap = Bitmap.createBitmap(
-            mutableBitmap, 0,
-            0,
-            mutableBitmap.width,
-            mutableBitmap.height,
-            matrix,
-            true
-        )
+
+
+        /*if(bitmap.width>bitmap.height){
+            val matrix = Matrix()
+            matrix.postRotate(-90F)
+
+            //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
+
+            mutableBitmap = Bitmap.createBitmap(
+                mutableBitmap, 0,
+                0,
+                mutableBitmap.width,
+                mutableBitmap.height,
+                matrix,
+                true
+            )
+        }*/
+
         val canvas = Canvas(mutableBitmap)
 
         val color = -0xbdbdbe
@@ -168,12 +186,20 @@ class MainActivity : AppCompatActivity() {
 
         for (face in list) {
             var bounds = face.boundingBox
-            canvas.drawCircle(
+
+
+            /*canvas.drawCircle(
                 bounds.exactCenterX(),
                 bounds.exactCenterY(),
                 bounds.height().toFloat() / 2,
                 paint
+            )*/
+            var scaledNicolas = Bitmap.createScaledBitmap(
+                nicolas, bounds.width(),
+                bounds.height()+bounds.height()/2, false
             )
+            canvas.drawBitmap(scaledNicolas, bounds.exactCenterX()-bounds.width()/2,
+                bounds.exactCenterY()-(bounds.height()), paint)
         }
         canvas.drawBitmap(mutableBitmap, rect, rect, paint);
         image_view.setImageBitmap(mutableBitmap)

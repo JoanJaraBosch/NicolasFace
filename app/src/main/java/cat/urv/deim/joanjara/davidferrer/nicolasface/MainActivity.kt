@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private var image : Uri? = null
     private var mCameraFileName : String? = null
     private var dataFace : Intent? = null
+    private var auxBitMap : Bitmap? = null
     // High-accuracy landmark detection and face classification
     val highAccuracyOpts = FirebaseVisionFaceDetectorOptions.Builder()
         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
@@ -57,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         //BUTTON CLICK PICK
         img_pick_btn.setOnClickListener {
             //check runtime permission
+            auxBitMap=null
             if (VERSION.SDK_INT >= VERSION_CODES.M) {
                 if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
                     PackageManager.PERMISSION_DENIED
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
 
         //BUTTON CLICK TAKE PHOTO
         photo_take_btn.setOnClickListener {
+            dataFace=null
             REQUEST_IMAGE_CAPTURE = 1
             dispatchTakePictureIntent()
         }
@@ -89,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         //BUTTON TRANSFORM INTO NICOLAS CAGE
         nicolas_btn.setOnClickListener {
             Toast.makeText(this, "Transforming image to Nicolas Cage Image", Toast.LENGTH_SHORT).show()
-            detectFaces(dataFace)
+            detectFaces(dataFace, auxBitMap)
             saveImageFromGallery();
             img_share_btn.isClickable=true
             img_share_btn.visibility= View.VISIBLE
@@ -116,6 +119,7 @@ class MainActivity : AppCompatActivity() {
             "Nicolas Cage"
         )
         URI_NICOLAS = Uri.parse(message)
+        auxBitMap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), URI_NICOLAS);
         Toast.makeText(this, "Image saved: "+URI_NICOLAS , Toast.LENGTH_SHORT).show()
     }
 
@@ -198,19 +202,18 @@ class MainActivity : AppCompatActivity() {
         startActivity(sendIntent)
     }
 
-    fun detectFaces(data: Intent?) {
+    fun detectFaces(data: Intent?, map: Bitmap?) {
         val image: FirebaseVisionImage
 
         try {
-            if (data?.data != null) {
+            if (data?.data != null || map!=null) {
                 // Agafar el bitmap del storage, en principi no fa falta
                 /*val workingBitmap =
                     MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)*/
 
                 val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
-
-                image = FirebaseVisionImage.fromFilePath(this, data.data!!)
-
+                if(data!=null) image = FirebaseVisionImage.fromFilePath(this, data!!.data!!)
+                else image = FirebaseVisionImage.fromBitmap(map!!)
                 // Obtenemos una instancia de FirebaseVisionFaceDetector
                 val detector = FirebaseVision.getInstance()
                     .getVisionFaceDetector(highAccuracyOpts)

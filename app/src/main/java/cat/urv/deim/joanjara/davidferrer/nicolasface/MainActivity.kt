@@ -13,14 +13,13 @@ import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 import kotlinx.android.synthetic.main.activity_main.*
-import android.provider.MediaStore
 import android.graphics.*
 import com.google.firebase.ml.vision.face.FirebaseVisionFace
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.graphics.drawable.BitmapDrawable
+
+
 
 
 
@@ -116,8 +115,11 @@ class MainActivity : AppCompatActivity() {
 
         try {
             if (data?.data != null) {
-                val workingBitmap =
-                    MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)
+                // Agafar el bitmap del storage, en principi no fa falta
+                /*val workingBitmap =
+                    MediaStore.Images.Media.getBitmap(this.contentResolver, data.data!!)*/
+
+                val workingBitmap = (image_view.drawable as BitmapDrawable).bitmap
 
                 image = FirebaseVisionImage.fromFilePath(this, data.data!!)
 
@@ -158,7 +160,7 @@ class MainActivity : AppCompatActivity() {
         var nicolas = BitmapFactory.decodeResource(this.getResources(),R.drawable.nicolas_cage1)
 
 
-
+        // Rotacio de bitmap, en principi no fa falta
         /*if(bitmap.width>bitmap.height){
             val matrix = Matrix()
             matrix.postRotate(-90F)

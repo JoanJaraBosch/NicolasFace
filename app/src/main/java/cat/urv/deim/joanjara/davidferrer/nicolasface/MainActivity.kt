@@ -15,12 +15,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.provider.MediaStore
 
-
-
-
 class MainActivity : AppCompatActivity() {
     private var REQUEST_IMAGE_CAPTURE = 0
-
+    private var URI_NICOLAS = Uri.EMPTY
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -31,6 +28,10 @@ class MainActivity : AppCompatActivity() {
         }
         img_save_btn.isClickable=false
         img_save_btn.visibility= View.INVISIBLE
+
+        img_share_btn.isClickable=false
+        img_share_btn.visibility= View.INVISIBLE
+
         //BUTTON CLICK PICK
         img_pick_btn.setOnClickListener {
             //check runtime permission
@@ -64,12 +65,18 @@ class MainActivity : AppCompatActivity() {
             else{
                 //permission already granted
                 saveImageFromGallery();
+                img_share_btn.isClickable=true
+                img_share_btn.visibility= View.VISIBLE
             }
         }
         //BUTTON CLICK TAKE PHOTO
         photo_take_btn.setOnClickListener {
             REQUEST_IMAGE_CAPTURE = 1
             dispatchTakePictureIntent()
+        }
+        //BUTTON TO SHARE AN IMAGE
+        img_share_btn.setOnClickListener {
+            shareImage()
         }
     }
 
@@ -90,7 +97,8 @@ class MainActivity : AppCompatActivity() {
             "",
             "Nicolas Cage"
         )
-        Toast.makeText(this, "Image saved: "+ Uri.parse(message), Toast.LENGTH_SHORT).show()
+        URI_NICOLAS = Uri.parse(message)
+        Toast.makeText(this, "Image saved: "+URI_NICOLAS , Toast.LENGTH_SHORT).show()
     }
 
     companion object {
@@ -140,5 +148,13 @@ class MainActivity : AppCompatActivity() {
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
             }
         }
+    }
+
+    fun shareImage(){
+        val sendIntent = Intent()
+        sendIntent.action = Intent.ACTION_SEND
+        sendIntent.type ="image/*"
+        sendIntent.putExtra(Intent.EXTRA_STREAM, URI_NICOLAS)
+        startActivity(sendIntent)
     }
 }

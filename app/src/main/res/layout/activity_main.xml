@@ -29,6 +29,13 @@
         style="@style/Base.Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+    <!--Button to share image-->
+    <Button
+        android:id="@+id/img_share_btn"
+        android:text="Share"
+        style="@style/Base.Widget.AppCompat.Button.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
     <!--Button to download image-->
     <Button
         android:id="@+id/img_save_btn"
@@ -36,5 +43,4 @@
         style="@style/Base.Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
 </LinearLayout>

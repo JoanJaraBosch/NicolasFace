@@ -4,20 +4,28 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build.*
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import android.view.View
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.provider.MediaStore
+import android.os.StrictMode
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+
+
+
 
 class MainActivity : AppCompatActivity() {
     private var REQUEST_IMAGE_CAPTURE = 0
     private var URI_NICOLAS = Uri.EMPTY
+    private var image : Uri? = null
+    private var mCameraFileName : String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -88,9 +96,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveImageFromGallery() {
+        // Save image to gallery
         val draw = image_view.drawable
         val bitmap = (draw as BitmapDrawable).bitmap
-        // Save image to gallery
         val message = MediaStore.Images.Media.insertImage(
             contentResolver,
             bitmap,
@@ -138,18 +146,40 @@ class MainActivity : AppCompatActivity() {
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
             img_save_btn.isClickable=true
             img_save_btn.visibility= View.VISIBLE
-            val imageBitmap = data!!.extras!!.get("data") as Bitmap
-            image_view.setImageBitmap(imageBitmap)
+            if (data != null) {
+                image = data.data
+                image_view.setImageURI(image)
+                image_view.setVisibility(View.VISIBLE)
+            }
+            if (image == null && mCameraFileName != null) {
+                image = Uri.fromFile(File(mCameraFileName))
+                image_view.setImageURI(image)
+                image_view.setVisibility(View.VISIBLE)
+            }
+            val file = File(mCameraFileName)
+            if (!file.exists()) {
+                file.mkdir()
+            }
         }
-
     }
 
     private fun dispatchTakePictureIntent() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
-            }
-        }
+        val builder = StrictMode.VmPolicy.Builder()
+        StrictMode.setVmPolicy(builder.build())
+        val intent = Intent()
+        intent.action = MediaStore.ACTION_IMAGE_CAPTURE
+
+        val date = Date()
+        val df = SimpleDateFormat("-mm-ss")
+
+        val newPicFile = df.format(date) + ".jpg"
+        val outPath = "/sdcard/$newPicFile"
+        val outFile = File(outPath)
+
+        mCameraFileName = outFile.toString()
+        val outuri = Uri.fromFile(outFile)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outuri)
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
     }
 
     fun shareImage(){

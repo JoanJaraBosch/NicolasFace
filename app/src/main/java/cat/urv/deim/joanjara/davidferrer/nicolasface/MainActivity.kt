@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private var URI_NICOLAS = Uri.EMPTY
     private var image : Uri? = null
     private var mCameraFileName : String? = null
+    private var dataFace : Intent? = null
     // High-accuracy landmark detection and face classification
     val highAccuracyOpts = FirebaseVisionFaceDetectorOptions.Builder()
         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
@@ -48,6 +49,9 @@ class MainActivity : AppCompatActivity() {
         }
         img_save_btn.isClickable=false
         img_save_btn.visibility= View.INVISIBLE
+
+        nicolas_btn.isClickable=false
+        nicolas_btn.visibility= View.INVISIBLE
 
         img_share_btn.isClickable=false
         img_share_btn.visibility= View.INVISIBLE
@@ -96,6 +100,10 @@ class MainActivity : AppCompatActivity() {
         //BUTTON TO SHARE AN IMAGE
         img_share_btn.setOnClickListener {
             shareImage()
+        }
+        //BUTTON TRANSFORM INTO NICOLAS CAGE
+        nicolas_btn.setOnClickListener {
+            detectFaces(dataFace)
         }
     }
 
@@ -156,26 +164,23 @@ class MainActivity : AppCompatActivity() {
             img_save_btn.isClickable=true
             img_save_btn.visibility= View.VISIBLE
             //This goes our code to make nicolas happens
-            detectFaces(data)
+            nicolas_btn.isClickable=true
+            nicolas_btn.visibility= View.VISIBLE
+            dataFace = data
         }
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
             img_save_btn.isClickable=true
             img_save_btn.visibility= View.VISIBLE
-            if (data != null) {
-                image = data.data
-                image_view.setImageURI(image)
-                image_view.setVisibility(View.VISIBLE)
-            }
-            if (image == null && mCameraFileName != null) {
-                image = Uri.fromFile(File(mCameraFileName))
-                image_view.setImageURI(image)
-                image_view.setVisibility(View.VISIBLE)
-            }
+            image = Uri.fromFile(File(mCameraFileName))
+            image_view.setImageURI(image)
+            image_view.setVisibility(View.VISIBLE)
             val file = File(mCameraFileName)
             if (!file.exists()) {
                 file.mkdir()
             }
-            detectFaces(data)
+            saveImageFromGallery()
+            nicolas_btn.isClickable=true
+            nicolas_btn.visibility= View.VISIBLE
         }
     }
 

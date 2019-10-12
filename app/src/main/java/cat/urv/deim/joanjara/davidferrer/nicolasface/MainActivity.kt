@@ -22,6 +22,17 @@ import android.graphics.*
 import com.google.firebase.ml.vision.face.FirebaseVisionFace
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
+import android.os.Environment.DIRECTORY_PICTURES
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.os.Environment
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
@@ -74,9 +85,8 @@ class MainActivity : AppCompatActivity() {
 
         //BUTTON CLICK TAKE PHOTO
         photo_take_btn.setOnClickListener {
-            /*dataFace=null
             REQUEST_IMAGE_CAPTURE = 1
-            dispatchTakePictureIntent()*/
+            dispatchTakePictureIntent()
         }
         //BUTTON TO SAVE AN IMAGE
         img_save_btn.setOnClickListener {
@@ -84,8 +94,17 @@ class MainActivity : AppCompatActivity() {
         }
         //BUTTON TO SHARE AN IMAGE
         img_share_btn.setOnClickListener {
-            saveImage()
-            shareImage()
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PackageManager.PERMISSION_DENIED){
+                //permission denied
+                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                //show popup to request runtime permission
+                requestPermissions(permissions, PERMISSION_CODE);
+            }
+            else {
+                saveImage()
+                shareImage()
+            }
         }
         //BUTTON TRANSFORM INTO NICOLAS CAGE
         nicolas_btn.setOnClickListener {
@@ -168,11 +187,40 @@ class MainActivity : AppCompatActivity() {
         else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK){
             nicolas_btn.isClickable=true
             nicolas_btn.visibility= View.VISIBLE
+            val file =  File(mCurrentPhotoPath);
+            val bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.fromFile(file));
+
+            image_view.setImageBitmap(bitmap)
         }
     }
 
     private fun dispatchTakePictureIntent() {
+        /*Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            }
+        }*(
+         */
+        val takePictureIntent =  Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            var photoFile: File? = null;
+            try {
+                photoFile = createImageFile();
+            } catch ( ex: IOException) {
+                // Error occurred while creating the File
 
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                val photoURI = FileProvider.getUriForFile(this,
+                "cat.urv.deim.joanjara.davidferrer.nicolasface.fileprovider",
+                photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
+        }
     }
 
     fun shareImage(){
@@ -272,5 +320,22 @@ class MainActivity : AppCompatActivity() {
         canvas.drawBitmap(mutableBitmap, rect, rect, paint);
         image_view.setImageBitmap(mutableBitmap)
     }
+    var mCurrentPhotoPath: String? =null
 
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val imageFileName = "JPEG_" + timeStamp + "_"
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val image = File.createTempFile(
+            imageFileName, /* prefix */
+            ".jpg", /* suffix */
+            storageDir      /* directory */
+        )
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath()
+        return image
+    }
 }

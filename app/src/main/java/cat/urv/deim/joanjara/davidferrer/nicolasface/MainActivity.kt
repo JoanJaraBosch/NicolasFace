@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
             if(image_view != null){
                 val map = (image_view.drawable as BitmapDrawable).bitmap
                 val matrix = Matrix()
-                matrix.postRotate(-90F)
+                matrix.postRotate(90F)
 
                 //val scaledBitmap = Bitmap.createScaledBitmap(bitmapOrg, width, height, true)
 

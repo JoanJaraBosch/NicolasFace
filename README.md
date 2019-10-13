@@ -26,7 +26,7 @@ Thanks to this API we are able to modify the image and then saving into the gall
 
 ## Installation
 
-You can download the app here: [Link](https://sp.depositphotos.com/137087862/stock-illustration-portrait-of-nicolas-cage-icon.html)
+You can download the app here: [Link](http://www.droidbin.com/p1dn1bd29t1tai18bsg371gdvcf34)
 
 ## Versioning of Android
 

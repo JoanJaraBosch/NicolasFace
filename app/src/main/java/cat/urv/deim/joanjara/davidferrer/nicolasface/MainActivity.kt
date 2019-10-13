@@ -110,6 +110,7 @@ class MainActivity : AppCompatActivity() {
             nicolas_btn.isClickable=false
             nicolas_btn.visibility= View.INVISIBLE
         }
+
         //BUTTON TO ROTATE THE IMAGE -90 DEGREES
         rotate_btn.setOnClickListener {
             if(image_view != null){
